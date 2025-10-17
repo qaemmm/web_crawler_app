@@ -96,11 +96,11 @@ ANTI_SPIDER_CONFIG = {
 
 # Web应用配置
 WEB_CONFIG = {
-    'SECRET_KEY': 'your-secret-key-here',
-    'DEBUG': True,
+    'SECRET_KEY': os.environ.get('SECRET_KEY', 'your-secret-key-here'),
+    'DEBUG': os.environ.get('FLASK_DEBUG', 'False').lower() == 'true',
     'HOST': '0.0.0.0',
-    'PORT': 5000,
-    'THREADED': True
+    'PORT': int(os.environ.get('PORT', 5000)),
+    'THREADED': False  # 在Vercel serverless环境中禁用多线程
 }
 
 # 数据库配置

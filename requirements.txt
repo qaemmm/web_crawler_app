@@ -1,7 +1,16 @@
 flask
 flask-cors
-playwright
 fake-useragent
 pandas
 requests
 openpyxl
+
+# Vercel deployment specific dependencies
+gunicorn
+
+# Cloud browser services support
+beautifulsoup4
+lxml
+
+# Web framework enhancements
+werkzeug

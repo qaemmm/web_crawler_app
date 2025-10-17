@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/hybrid_app.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "api/browser_service.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/browser/(.*)",
+      "dest": "api/browser_service.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "api/hybrid_app.py"
+    }
+  ],
+  "env": {
+    "PYTHON_VERSION": "3.9",
+    "FLASK_DEBUG": "false"
+  },
+  "functions": {
+    "api/hybrid_app.py": {
+      "maxDuration": 15
+    },
+    "api/browser_service.py": {
+      "maxDuration": 30
+    }
+  }
+}
