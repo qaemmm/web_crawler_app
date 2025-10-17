@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大众点评爬虫Web应用</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">
+                    <i class="fas fa-spider"></i>
+                    大众点评爬虫助手
+                </h1>
+                <div class="status-indicator">
+                    <span class="status-dot" id="apiStatus"></span>
+                    <span class="status-text" id="apiStatusText">检查中...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容区域 -->
+    <main class="main-container">
+        <div class="container">
+            <div class="main-layout">
+                
+                <!-- 左侧主要操作区 -->
+                <div class="main-content">
+                    
+                    <!-- Cookie输入区域 -->
+                    <section class="section cookie-section">
+                        <div class="section-header">
+                            <h2><i class="fas fa-cookie-bite"></i> Cookie管理</h2>
+                            <button class="btn btn-secondary btn-sm" id="cookieHelpBtn">
+                                <i class="fas fa-question-circle"></i> 帮助
+                            </button>
+                        </div>
+                        <div class="section-content">
+                            <div class="cookie-input-group">
+                                <div class="input-group">
+                                    <textarea id="cookieInput" class="form-control cookie-textarea" 
+                                             placeholder="请输入大众点评Cookie字符串...&#10;&#10;格式示例：_lxsdk_cuid=xxx; dper=xxx; ll=xxx; ..." 
+                                             rows="4"></textarea>
+                                    <div class="input-group-append">
+                                        <button class="btn btn-primary" id="validateCookieBtn">
+                                            <i class="fas fa-check-circle"></i> 验证
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="cookie-status" id="cookieStatus"></div>
+                            </div>
+                            
+                            <!-- Cookie保存和管理 -->
+                            <div class="cookie-management">
+                                <div class="cookie-save-group">
+                                    <input type="text" id="cookieName" class="form-control form-control-sm" 
+                                           placeholder="Cookie名称 (如: cookie1)">
+                                    <button class="btn btn-outline-primary btn-sm" id="saveCookieBtn">
+                                        <i class="fas fa-save"></i> 保存
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm" id="loadCookieBtn">
+                                        <i class="fas fa-folder-open"></i> 加载
+                                    </button>
+                                </div>
+                                <div class="cookie-list" id="cookieList"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 参数选择区域 -->
+                    <section class="section params-section">
+                        <div class="section-header">
+                            <h2><i class="fas fa-cog"></i> 爬取参数</h2>
+                            <button class="btn btn-warning btn-sm" id="showNoticesBtn">
+                                <i class="fas fa-exclamation-triangle"></i> 重要提醒
+                            </button>
+                        </div>
+                        <div class="section-content">
+                            
+                            <!-- 城市选择和排序选项 -->
+                            <div class="param-row">
+                                <div class="param-group city-group">
+                                    <label for="citySelect" class="form-label">
+                                        <i class="fas fa-map-marker-alt"></i> 选择城市
+                                    </label>
+                                    <select id="citySelect" class="form-select">
+                                        <option value="">请选择城市...</option>
+                                    </select>
+                                </div>
+
+                                <div class="param-group sort-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-sort"></i> 排序方式
+                                    </label>
+                                    <div class="sort-options">
+                                        <div class="sort-option">
+                                            <label class="radio-label">
+                                                <input type="radio" name="sortType" value="popularity" checked>
+                                                <span class="radio-custom"></span>
+                                                人气最多
+                                            </label>
+                                        </div>
+                                        <div class="sort-option">
+                                            <label class="radio-label">
+                                                <input type="radio" name="sortType" value="reviews">
+                                                <span class="radio-custom"></span>
+                                                评价最多
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 品类选择 -->
+                            <div class="param-group">
+                                <label class="form-label">
+                                    <i class="fas fa-tags"></i> 选择品类 
+                                    <span class="text-muted">(最多2个)</span>
+                                </label>
+                                <div class="categories-grid" id="categoriesGrid">
+                                    <!-- 品类选项将通过JavaScript动态生成 -->
+                                </div>
+                                <div class="selected-categories" id="selectedCategories"></div>
+                            </div>
+
+                            <!-- 页数范围设置 -->
+                            <div class="param-group">
+                                <label class="form-label">
+                                    <i class="fas fa-file-alt"></i> 页数范围选择
+                                </label>
+                                <div class="page-range-options">
+                                    <div class="range-option">
+                                        <label class="radio-label">
+                                            <input type="radio" name="pageRange" value="first" checked>
+                                            <span class="radio-custom"></span>
+                                            前15页 (第1-15页)
+                                        </label>
+                                    </div>
+                                    <!-- <div class="range-option">
+                                        <label class="radio-label">
+                                            <input type="radio" name="pageRange" value="last">
+                                            <span class="radio-custom"></span>
+                                            后15页 (最后15页)
+                                        </label>
+                                    </div> -->
+                                    <div class="range-option">
+                                        <label class="radio-label">
+                                            <input type="radio" name="pageRange" value="custom">
+                                            <span class="radio-custom"></span>
+                                            自定义范围
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="custom-range-group" id="customRangeGroup" style="display: none;">
+                                    <div class="range-inputs">
+                                        <div class="input-group">
+                                            <label for="startPage">起始页:</label>
+                                            <input type="number" id="startPage" class="form-control form-control-sm" 
+                                                   min="1" max="100" value="1">
+                                        </div>
+                                        <div class="input-group">
+                                            <label for="endPage">结束页:</label>
+                                            <input type="number" id="endPage" class="form-control form-control-sm" 
+                                                   min="1" max="100" value="15">
+                                        </div>
+                                    </div>
+                                    <div class="range-info" id="rangeInfo">
+                                        <span class="range-summary">将爬取第1-15页，共15页</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </section>
+
+                    <!-- 爬取控制区域 -->
+                    <section class="section control-section">
+                        <div class="section-header">
+                            <h2><i class="fas fa-play-circle"></i> 爬取控制</h2>
+                        </div>
+                        <div class="section-content">
+                            
+                            <!-- 限制检查结果 -->
+                            <div class="restrictions-check" id="restrictionsCheck"></div>
+
+                            <!-- 控制按钮 -->
+                            <div class="control-buttons">
+                                <button class="btn btn-success btn-lg" id="startCrawlBtn" disabled>
+                                    <i class="fas fa-play"></i> 开始爬取
+                                </button>
+                                <button class="btn btn-danger btn-lg" id="stopCrawlBtn" style="display: none;">
+                                    <i class="fas fa-stop"></i> 停止爬取
+                                </button>
+                                <button class="btn btn-outline-primary" id="checkRestrictionsBtn">
+                                    <i class="fas fa-shield-alt"></i> 检查限制
+                                </button>
+                            </div>
+
+                            <!-- 进度显示 -->
+                            <div class="progress-container" id="progressContainer" style="display: none;">
+                                <div class="progress-info">
+                                    <span class="progress-label" id="progressLabel">准备中...</span>
+                                    <span class="progress-percentage" id="progressPercentage">0%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+                                </div>
+                                <div class="progress-details" id="progressDetails"></div>
+                                
+                                <div class="mt-3">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="toggleLogBtn">
+                                        <i class="fas fa-list-alt"></i>
+                                        查看详细日志
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 详细日志显示 -->
+                            <div class="log-container" id="crawlLogPanel" style="display: none;">
+                                <div class="log-header">
+                                    <h4><i class="fas fa-terminal"></i> 爬取日志</h4>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="taskMonitor.clearLogMessages()">
+                                        <i class="fas fa-trash"></i> 清空日志
+                                    </button>
+                                </div>
+                                <div class="log-content" id="crawlLogContainer">
+                                    <!-- 日志内容将通过JavaScript动态生成 -->
+                                </div>
+                            </div>
+
+                        </div>
+                    </section>
+
+                </div>
+
+                <!-- 右侧信息面板 -->
+                <div class="sidebar">
+                    
+                    <!-- 统计信息 -->
+                    <section class="sidebar-section stats-section">
+                        <h3><i class="fas fa-chart-bar"></i> 统计信息</h3>
+                        <div class="stats-grid" id="statsGrid">
+                            <div class="stat-item">
+                                <div class="stat-value" id="totalTasks">-</div>
+                                <div class="stat-label">总任务数</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="todayTasks">-</div>
+                                <div class="stat-label">今日任务</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="totalShops">-</div>
+                                <div class="stat-label">总商铺数</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="successRate">-</div>
+                                <div class="stat-label">成功率</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 队列状态 -->
+                    <section class="sidebar-section queue-section">
+                        <h3><i class="fas fa-list"></i> 任务队列</h3>
+                        <div class="queue-info" id="queueInfo">
+                            <div class="queue-item">
+                                <span class="queue-label">等待中:</span>
+                                <span class="queue-value" id="pendingTasks">0</span>
+                            </div>
+                            <div class="queue-item">
+                                <span class="queue-label">执行中:</span>
+                                <span class="queue-value" id="runningTasks">0</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 历史记录 -->
+                    <section class="sidebar-section history-section">
+                        <h3><i class="fas fa-history"></i> 历史记录</h3>
+                        <div class="history-list" id="historyList">
+                            <!-- 历史记录将通过JavaScript动态生成 -->
+                        </div>
+                        <!-- <button class="btn btn-outline-primary btn-sm" id="loadMoreHistoryBtn">
+                            <i class="fas fa-chevron-down"></i> 加载更多
+                        </button> -->
+                    </section>
+
+                    <!-- 高德电话查询 -->
+                    <section class="sidebar-section gaode-section">
+                        <h3><i class="fas fa-phone"></i> 高德电话查询</h3>
+                        <div class="gaode-content">
+                            <div class="gaode-api-key">
+                                <label for="gaodeApiKey" class="form-label">
+                                    <i class="fas fa-key"></i> API Key
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" id="gaodeApiKey" class="form-control form-control-sm" 
+                                           placeholder="请输入高德API Key">
+                                    <button class="btn btn-outline-secondary btn-sm" id="toggleApiKeyBtn" type="button">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+
+                                <div class="api-key-status" id="apiKeyStatus"></div>
+                            </div>
+                            
+                            <div class="gaode-file-upload">
+                                <label for="gaodeFileInput" class="form-label">
+                                    <i class="fas fa-file-csv"></i> 上传CSV文件
+                                </label>
+                                <input type="file" id="gaodeFileInput" class="form-control form-control-sm" 
+                                       accept=".csv">
+                                <div class="file-info" id="gaodeFileInfo"></div>
+                            </div>
+                            
+                            <div class="gaode-actions">
+                                <button class="btn btn-success btn-sm" id="processGaodeBtn" disabled>
+                                    <i class="fas fa-cogs"></i> 开始处理
+                                </button>
+                                <div class="gaode-progress" id="gaodeProgress" style="display: none;">
+                                    <div class="progress-info">
+                                        <span class="progress-label" id="gaodeProgressLabel">处理中...</span>
+                                        <span class="progress-percentage" id="gaodeProgressPercentage">0%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar" id="gaodeProgressBar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="gaode-result" id="gaodeResult" style="display: none;">
+                                <div class="result-info" id="gaodeResultInfo"></div>
+                                <button class="btn btn-outline-primary btn-sm" id="downloadGaodeResultBtn">
+                                    <i class="fas fa-download"></i> 下载结果
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 文件上传 -->
+                    <section class="sidebar-section files-section">
+                        <h3><i class="fas fa-upload"></i> 文件上传</h3>
+                        <div class="file-upload-content">
+
+                            
+                            
+                            
+                            <!-- 文件导入上传模块 -->
+                            <div class="third-party-section" id="thirdPartySection">
+                                <h4><i class="fas fa-file-import"></i> 文件导入上传</h4>
+                                
+                                <!-- 测试链接 -->
+                                <div class="test-links mb-2">
+                                    <a href="/test-api.html" target="_blank" class="btn btn-outline-info btn-sm">
+                                        <i class="fas fa-flask"></i> API测试页面
+                                    </a>
+                                    <small class="text-muted">测试文件上传和导入功能</small>
+                                </div>
+                                
+                                <!-- Token输入 -->
+                                <div class="token-input-section">
+                                    <label for="apiTokenInput" class="form-label">
+                                        <i class="fas fa-key"></i> API Token
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="password" id="apiTokenInput" class="form-control form-control-sm" 
+                                               placeholder="请输入API Token">
+                                        <button class="btn btn-outline-secondary btn-sm" id="toggleTokenBtn" type="button">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="token-status" id="tokenInputStatus"></div>
+                                </div>
+                                
+                                <!-- 环境选择 -->
+                                <div class="environment-selection">
+                                    <label for="environmentSelect" class="form-label">运行环境</label>
+                                    <select class="form-select form-control-sm" id="environmentSelect">
+                                        <option value="test">测试环境</option>
+                                        <option value="production">生产环境</option>
+                                    </select>
+                                    <div class="form-text" id="environmentInfo">测试环境 - 连接测试第三方API服务</div>
+                                </div>
+
+                                <!-- 文件选择 -->
+                                <div class="third-party-file-upload">
+                                    <label for="thirdPartyFileInput" class="form-label">
+                                        <i class="fas fa-file-excel"></i> 选择Excel文件（支持多文件）
+                                    </label>
+                                    <input type="file" class="form-control form-control-sm" id="thirdPartyFileInput"
+                                           accept=".xlsx,.xls"
+                                           multiple
+                                           title="支持Excel格式文件(.xls, .xlsx)，可同时选择多个文件">
+                                    <div class="form-text">支持Excel格式(.xls, .xlsx)，可选择多个文件同时上传和导入</div>
+                                </div>
+
+                                <!-- 已选择的文件列表 -->
+                                <div class="selected-files-list" id="selectedFilesList" style="display: none;">
+                                    <label class="form-label">
+                                        <i class="fas fa-list"></i> 已选择的文件
+                                    </label>
+                                    <div class="files-list" id="filesList"></div>
+                                </div>
+
+                                <!-- 状态显示 -->
+                                <div id="thirdPartyStatus" style="display: none;"></div>
+                                
+                                <!-- 进度显示 -->
+                                <div id="thirdPartyProgress" style="display: none;"></div>
+                                
+                                <!-- 任务状态 -->
+                                <div id="taskStatusContainer" style="display: none;"></div>
+                            </div>
+                            
+
+                        </div>
+                    </section>
+
+
+
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- 模态框 -->
+    
+    <!-- 重要提醒模态框 -->
+    <div class="modal" id="noticesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle text-warning"></i> 重要提醒</h3>
+                <button class="modal-close" id="noticesModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="notices-list" id="noticesList">
+                    <!-- 提醒内容将通过JavaScript动态生成 -->
+                </div>
+                <div class="modal-footer">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="dontShowAgain">
+                        <span class="checkmark"></span>
+                        今日不再显示
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cookie帮助模态框 -->
+    <div class="modal" id="cookieHelpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-question-circle"></i> Cookie获取帮助</h3>
+                <button class="modal-close" id="cookieHelpModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="help-content">
+                    <h4>如何获取大众点评Cookie：</h4>
+                    <ol>
+                        <li>打开浏览器，访问 <code>www.dianping.com</code></li>
+                        <li>登录你的大众点评账号</li>
+                        <li>按 <kbd>F12</kbd> 打开开发者工具</li>
+                        <li>点击 <strong>Network</strong> 标签页</li>
+                        <li>刷新页面，找到任意请求</li>
+                        <li>在请求头中找到 <code>Cookie</code> 字段</li>
+                        <li>复制完整的Cookie值粘贴到上面的输入框</li>
+                    </ol>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>注意：</strong>Cookie包含敏感信息，请勿泄露给他人！
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 任务详情模态框 -->
+    <div class="modal" id="taskDetailModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3><i class="fas fa-tasks"></i> 任务详情</h3>
+                <button class="modal-close" id="taskDetailModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="task-detail-content" id="taskDetailContent">
+                    <!-- 任务详情内容将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 全局加载指示器 -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <div class="loading-text">处理中...</div>
+        </div>
+    </div>
+
+    <!-- 全局消息提示 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- JavaScript文件 -->
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/cookie-manager.js"></script>
+    <script src="/static/js/task-monitor.js"></script>
+    
+    <script src="/static/js/third-party-manager.js"></script>
+    <script src="/static/js/gaode-manager.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

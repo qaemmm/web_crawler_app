@@ -1,0 +1,7 @@
+flask
+flask-cors
+playwright
+fake-useragent
+pandas
+requests
+openpyxl
